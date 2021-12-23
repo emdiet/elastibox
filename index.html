@@ -1,0 +1,39 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+    <!-- load index.css -->
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <script src="dist/elastibox.js"></script>
+
+  <!-- make a div that fills the whole page -->
+  <div id="ebox" style="width:100%;height:100%;background-color:aqua;overflow: scroll">
+      <div id="boxone" style="background-color: bisque; display: inline-block; position: absolute; top: 10px; left: 10px" draggable="true">
+          draghandle
+          <textarea>
+              ljlkhlkhsg
+          </textarea>
+          poste
+      </div>
+      <div id="boxone1" style="background-color: bisque; display: inline-block; position: absolute; top: 10px; left: 10px" draggable="true">
+          draghandle
+          <textarea>
+              ljlkhlkhsg
+          </textarea>
+          poste
+      </div>
+  </div>
+
+
+  <script>
+      const elastibox = new Elastibox("ebox");
+      elastibox.registerHTMLElement("boxone");
+      elastibox.registerHTMLElement("boxone1");
+      log("registered");
+  </script>
+</body>
+
+</html>
