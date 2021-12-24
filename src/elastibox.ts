@@ -11,9 +11,175 @@ type Box = {
   height: number;
 };
 class Entity {
-    public element: HTMLElement;
-    public content: { };
-    geometry: Geometry;
+    public readonly element: HTMLElement;
+    public readonly content: { };
+    public readonly referenceId: string;
+
+    private readonly rightBar: HTMLElement;
+    private readonly leftBar: HTMLElement;
+
+    private readonly resizeHandler: () => void;
+    private readonly resizeObserver: ResizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        this.resizeHandler();
+      }
+    });
+
+
+    constructor(referenceId: string, element: HTMLElement, content: { }) {
+        this.referenceId = referenceId;
+        this.element = element;
+        this.content = content;
+
+
+
+
+        this.rightBar = this.createBar("right",["plug", "plug"])
+        element.appendChild(this.rightBar);
+
+        this.leftBar = this.createBar("left", ["socket", "socket"])
+        element.appendChild(this.leftBar);
+
+
+        let mouseDragStartMousePosition: { x: number, y: number } | null = null;
+        let mouseDragStartEntityPosition: { x: number, y: number } | null = null;
+
+        element.ondragstart = (e) => {
+
+            if(!e.dataTransfer){
+                log("transfer failed", e);
+            } else {
+                e.dataTransfer.setData("text/plain", "placeholder 14424");
+            }
+
+            mouseDragStartMousePosition = {
+                x: e.clientX,
+                y: e.clientY
+            };
+            mouseDragStartEntityPosition = this.getPosition();
+        };
+
+        element.ondrag = (e) => {
+            if(!mouseDragStartMousePosition || !mouseDragStartEntityPosition){
+                return;
+            }
+            const deltaX = e.clientX - mouseDragStartMousePosition.x;
+            const deltaY = e.clientY - mouseDragStartMousePosition.y;
+
+            const newPosition = {
+                x: mouseDragStartEntityPosition.x + deltaX,
+                y: mouseDragStartEntityPosition.y + deltaY
+            };
+
+            this.setPosition(newPosition);
+        };
+
+        this.resizeHandler = () => {
+            const { width, height } = element.getBoundingClientRect();
+        };
+
+        this.resizeObserver.observe(element);
+
+    }
+
+    public setPosition(position: { x: number, y: number }): void {
+        this.element.style.left = position.x + 'px';
+        this.element.style.top = position.y + 'px';
+    }
+
+    public getPosition(): { x: number, y: number } {
+        return {
+            x: this.element.getBoundingClientRect().left,
+            y: this.element.getBoundingClientRect().top
+        };
+    }
+
+    private createBar(side: 'right' | 'left', circles: string[]): HTMLElement {
+        const bar = document.createElement('div');
+        bar.classList.add('elastibox-plug-bar');
+        bar.style.position = 'absolute';
+        bar.style[side] = '0px';
+        bar.style.top = '0px';
+        bar.style.height = '100%';
+        bar.style.width = '0';
+
+
+        // create a round divs in the middle of the bar
+        for(let i = 1; i <= circles.length; i++){
+            const type = circles[i-1];
+            const diameter = 15;
+            const round = document.createElement('div');
+            round.classList.add('elastibox-plug-bar-round');
+            round.style.position = 'absolute';
+            round.style.top = (i * 100 / (circles.length+1)) + '%';
+            round.style.left = '50%';
+            round.style.transform = 'translate(-50%, -50%)';
+            round.style.width = diameter + 'px';
+            round.style.height = diameter + 'px';
+            round.style.borderRadius = '50%';
+            round.classList.add(circles[i-1]);
+
+            round.draggable = true;
+
+            let connector: HTMLElement | null = null;
+
+            round.ondragstart = (e) => {
+                // @ts-ignore
+                e.dataTransfer.setData("text/plain", "placeholder 14424");
+                e.stopPropagation();
+
+                // draw a div between the round element and the cursor
+                if(connector) connector.remove();
+                connector = document.createElement('div');
+                connector.classList.add('elastibox-plug-bar-div');
+                connector.style.position = 'absolute';
+                connector.style.top = '0';
+                connector.style.left = '0';
+                connector.style.width = '0';
+                connector.style.height = '0';
+                connector.style.backgroundColor = '#000';
+
+                round.appendChild(connector);
+            };
+            round.ondrag = (e) => {
+                e.stopPropagation();
+
+                log("drag", e);
+                if(connector){
+                    log("connector", connector);
+                    const { x, y } = round.getBoundingClientRect();
+                    const xOffset = round.getBoundingClientRect().width / 2;
+                    const yOffset = round.getBoundingClientRect().height / 2;
+                    log("xOffset", xOffset);
+                    log("yOffset", yOffset);
+                    const { clientX, clientY } = e;
+                    const deltaX = clientX - (x + xOffset);
+                    const deltaY = clientY - (y + yOffset);
+                    connector.style.width = Math.abs(deltaX)+ 'px';
+                    connector.style.height = Math.abs(deltaY) + 'px';
+                    connector.style.top = (deltaY > yOffset ? yOffset : deltaY + yOffset) + 'px';
+                    connector.style.left = (deltaX > xOffset ? xOffset : deltaX + xOffset) + 'px';
+                }
+            };
+            round.ondragend = (e) => {
+                e.stopPropagation();
+                if(connector){
+                    connector.remove();
+                }
+            };
+
+            bar.appendChild(round);
+        }
+
+
+
+
+        return bar;
+
+
+    }
+
+
 }
 
 const DEBUG = true;
@@ -121,49 +287,21 @@ class Elastibox {
         element.style.left = geometry.x + "px";
         element.style.top = geometry.y + "px";
 
-        // register element
-        const elastiboxId = this._generateElastiboxId();
-        element.dataset.elastiboxId = elastiboxId;
+        // generate ID
+        const elastiboxEntityId = this._generateElastiboxId();
 
         // create entity
-        const entity: Entity = {
-            element: element,
-            content: content,
-            geometry: geometry,
-        };
+        const entity: Entity = new Entity(elastiboxEntityId, element, content);
 
         // register entity
-        this._entityRegistry.set(elastiboxId, entity);
+        this._entityRegistry.set(elastiboxEntityId, entity);
 
             // observe entity resize
         this._entityResizeObserver.observe(element);
 
-        let mouseDragStartMousePosition: { x: number, y: number } | null = null;
-        let mouseDragStartEntityPosition: { x: number, y: number } | null = null;
 
-        // observe element drag
-        element.ondragstart = (e) => {
-            mouseDragStartMousePosition = {
-                x: e.clientX,
-                y: e.clientY
-            };
-            mouseDragStartEntityPosition = {
-                x: entity.geometry.x,
-                y: entity.geometry.y
-            };
-        };
 
-        element.ondrag = (e) => {
-            if(!mouseDragStartMousePosition || !mouseDragStartEntityPosition){
-                return;
-            }
-            const deltaX = e.clientX - mouseDragStartMousePosition.x;
-            const deltaY = e.clientY - mouseDragStartMousePosition.y;
-            entity.geometry.x = mouseDragStartEntityPosition.x + deltaX;
-            entity.geometry.y = mouseDragStartEntityPosition.y + deltaY;
-            entity.element.style.left = entity.geometry.x + "px";
-            entity.element.style.top = entity.geometry.y + "px";
-        };
+
 
         log("registered element", element, content, geometry);
 
@@ -177,5 +315,7 @@ class Elastibox {
 
         return elastiboxId;
     }
+
+
 }
 
