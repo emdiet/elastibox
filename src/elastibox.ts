@@ -18,6 +18,8 @@ class Entity {
     private readonly rightBar: HTMLElement;
     private readonly leftBar: HTMLElement;
 
+    private onMoveRegistry: { [key: string]: Function } = { };
+
     private readonly resizeHandler: () => void;
     private readonly resizeObserver: ResizeObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
@@ -117,11 +119,13 @@ class Entity {
             round.style.width = diameter + 'px';
             round.style.height = diameter + 'px';
             round.style.borderRadius = '50%';
-            round.classList.add(circles[i-1]);
+            round.classList.add(type);
 
             round.draggable = true;
 
             let connector: HTMLElement | null = null;
+            let svg: SVGElement | null = null;
+            let arrow: SVGElement | null = null;
 
             round.ondragstart = (e) => {
                 // @ts-ignore
@@ -137,7 +141,24 @@ class Entity {
                 connector.style.left = '0';
                 connector.style.width = '0';
                 connector.style.height = '0';
-                connector.style.backgroundColor = '#000';
+                if(DEBUG) connector.style.backgroundColor = 'rgba(255,178,178,0.13)';
+
+                svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("style", "position: absolute;");
+                svg.setAttribute("height", "100%");
+                svg.setAttribute("width", "100%");
+
+                arrow = document.createElementNS('http://www.w3.org/2000/svg','line');
+                arrow.setAttribute('x1','0');
+                arrow.setAttribute('y1','0');
+                arrow.setAttribute('x2','0');
+                arrow.setAttribute('y2','0');
+                arrow.setAttribute("stroke", "black");
+                arrow.setAttribute("stroke-width", "2");
+
+                svg.appendChild(arrow);
+
+                connector.appendChild(svg);
 
                 round.appendChild(connector);
             };
@@ -145,7 +166,7 @@ class Entity {
                 e.stopPropagation();
 
                 log("drag", e);
-                if(connector){
+                if(connector && svg && arrow){
                     log("connector", connector);
                     const { x, y } = round.getBoundingClientRect();
                     const xOffset = round.getBoundingClientRect().width / 2;
@@ -159,12 +180,21 @@ class Entity {
                     connector.style.height = Math.abs(deltaY) + 'px';
                     connector.style.top = (deltaY > yOffset ? yOffset : deltaY + yOffset) + 'px';
                     connector.style.left = (deltaX > xOffset ? xOffset : deltaX + xOffset) + 'px';
+
+
+                    arrow.setAttribute('x1',deltaX < 0 ? '0' : ''+deltaX);
+                    arrow.setAttribute('y1',deltaY < 0 ? '0' : ''+deltaY);
+                    arrow.setAttribute('x2',deltaX > 0 ? '0' : Math.abs(deltaX)+ '');
+                    arrow.setAttribute('y2',deltaY > 0 ? '0' : Math.abs(deltaY)+ '');
+                    log("deltaX", deltaX);
+                    log("deltaY", deltaY);
+                    log("arrow", arrow);
                 }
             };
             round.ondragend = (e) => {
                 e.stopPropagation();
                 if(connector){
-                    connector.remove();
+                    //connector.remove();
                 }
             };
 
@@ -310,10 +340,8 @@ class Elastibox {
 
     private _generateElastiboxId(): string{
         // generate a global ID
-        const elastiboxId = Elastibox._deviceId + "-" + this._instanceId + "-" +
+        return Elastibox._deviceId + "-" + this._instanceId + "-" +
             Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-        return elastiboxId;
     }
 
 
