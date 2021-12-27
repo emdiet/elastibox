@@ -10,7 +10,7 @@
     "removeComments": false,
     "noImplicitAny": false,
     "strictNullChecks": true,
-    "outDir": "./dist/",
+    "outFile": "./dist/elastibox.js",
     "rootDir": "./src/",
     "lib": [
       "es2020",
