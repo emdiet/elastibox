@@ -4,25 +4,36 @@
 <head>
     <!-- load index.css -->
     <link rel="stylesheet" href="index.css">
+    <!-- load elastibox.css -->
+    <link rel="stylesheet" href="src/elastibox.css">
+    <title>Elastibpx Demo</title>
 </head>
 
 <body>
   <script src="dist/elastibox.js"></script>
 
   <!-- make a div that fills the whole page -->
-  <div id="ebox" style="width:100%;height:100%;background-color:aqua;overflow: scroll">
-      <div id="boxone" style="background-color: bisque; display: inline-block; position: absolute; top: 10px; left: 10px" draggable="true">
-          draghandle
-          <textarea>
-              ljlkhlkhsg
-          </textarea>
+  <div id="ebox" class="elastibox-canvas" style="background-color: bisque; ">
+      <div id="boxone" style="background-color: bisque; display: inline-block; position: absolute; top: 10px; left: 10px" draggable="true"
+           data-elastibox_position="[0,500]"
+           data-elastibox_right="['out1', 'out2', 'in3']"
+           data-elastibox_left="['in1', 'in2', 'out3']"
+      >
+          draghandlu boxone
+          <label>
+<textarea>
+    ljlkhlkhsg
+</textarea>
+          </label>
           poste
       </div>
       <div id="boxone1" style="background-color: bisque; display: inline-block; position: absolute; top: 100px; left: 100px" draggable="true">
           draghandle
-          <textarea>
-              ljlkhlkhsg
-          </textarea>
+          <label>
+<textarea>
+    ljlkhlkhsg
+</textarea>
+          </label>
           poste
       </div>
   </div>
@@ -30,8 +41,6 @@
 
   <script>
       const elastibox = new Elastibox("ebox");
-      elastibox.registerHTMLElement("boxone");
-      elastibox.registerHTMLElement("boxone1");
       log("registered");
   </script>
 </body>

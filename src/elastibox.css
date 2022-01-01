@@ -1,0 +1,27 @@
+.elastibox-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.elastibox-entity {
+    border-width: 2px;
+    border-radius: 5px;
+    border-style: solid;
+    border-color: #d6720c;
+
+    background-color: #afd275;
+    box-shadow:
+            12px 12px 16px 0 rgba(0, 0, 0, 0.25),
+            -8px -8px 12px 0 rgba(255, 255, 255, 0.9);
+}
+
+.elastibox-entity-dragging {
+    border-color: #00ff00;
+    cursor: move;
+}
+
+.elastibox-selected {
+    border-color: #1496dc;
+}

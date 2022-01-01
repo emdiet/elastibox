@@ -1,37 +1,10 @@
-type Geometry = {
-  x: number;
-  y: number;
-  z: number;
-  height: number;
-  width: number;
-};
-type Box = {
-  position: Geometry;
-  width: number;
-  height: number;
-};
 
-class Observable<T>{
-    callbackRegistry: Map<Symbol, (value: T) => void>
-  constructor(private value: T) {}
-  subscribe(callback: (value: T) => void): Symbol {
-      const reference = Symbol();
-      this.callbackRegistry.set(reference, callback);
-      callback(this.value);
-      return reference;
-  }
-  unsubscribe(reference: Symbol) {
-      this.callbackRegistry.delete(reference);
-  }
-  next(value: T) {
-      this.value = value;
-      this.callbackRegistry.forEach(callback => callback(value));
-  }
-}
 
 type ConnectorFactory = (originPosition: Observable<{x: number, y: number} | "delete">, targetPosition: Observable<{x: number, y: number}| "delete">, data: {}) =>  void;
 
-class Entity {
+/*
+// region entity
+class old_Entity {
     public readonly element: HTMLElement;
     public readonly content: { };
     public readonly referenceId: string;
@@ -289,6 +262,9 @@ class Entity {
 
 
 }
+// endregion
+*/
+
 
 const DEBUG = true;
 function log(...args: any[]) {
@@ -301,75 +277,42 @@ class Elastibox {
 
     static readonly  _deviceId = Math.random().toString(36).substring(2, 15);
     private readonly _instanceId = Math.random().toString(36).substring(2, 15);
-    private _canvas: HTMLElement;
+    private readonly _canvas: Canvas;
+    private readonly _canvasElement: HTMLElement;
     private _canvasResizeObserver: ResizeObserver;
     private readonly _entityRegistry = new Map<string, Entity>();
     private readonly _entityResizeObserver: ResizeObserver;
 
 
 
-    constructor(canvas ?: HTMLElement | string) {
+    constructor(canvas: HTMLElement | string) {
 
-        this._canvasResizeObserver = new ResizeObserver(entries => {
-            for (const entry of entries) {
-                const { contentRect } = entry;
-                log("contentrect canvas", contentRect);
-            }
+        console.log("Elastibox.constructor");
+        this._canvas = new Canvas(fetchHTMLElement(canvas));
+
+        /*
+        if(this._canvas){throw new Error("Canvas already registered");}
+
+        this._canvasElement = fetchHTMLElement(canvas);
+        this._canvas = new Canvas(this._canvasElement);
+
+        new MutationObserver(() => {
+            this._canvasResizeObserver.observe(this._canvasElement);
+        }).observe(this._canvasElement, {
+            childList: true,
+            attributes: false, // consider watching this to warn of misuse
+            subtree: false
         });
+        */
 
-        this._entityResizeObserver = new ResizeObserver(entries => {
-            for (const entry of entries) {
-                const { contentRect } = entry;
-                log("contentrect entity", contentRect);
-            }
-        });
-
-        if(canvas) this.registerCanvas(canvas);
     }
 
-
-    public registerCanvas(canvas: HTMLElement | string){
-        if(this._canvas){
-            throw new Error("Canvas already registered");
-        }
-        if(typeof canvas === HTMLElement.name){
-            this._canvas = canvas as HTMLElement;
-        } else {
-            const _canvas = document.getElementById(canvas as string);
-            if(!_canvas){
-                throw new Error("Canvas id not found: " + canvas);
-            }
-            this._canvas = _canvas;
-        }
-        if(!this._canvas){
-            throw new Error("Canvas not found");
-        }
-
-        this._canvas.ondragover = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        };
-
-        this._canvasResizeObserver.observe(this._canvas);
-    }
-
-    public registerHTMLElement(element: HTMLElement | string, content = {}, geometry?: Geometry){
-        log("registering element", element);
-        // Register an element
-        if(!this._canvas){
-            throw new Error("Canvas not registered");
-        }
-        // if element is a string, get the element
-        if(typeof element === "string") {
-            const _element = document.getElementById(element as string);
-            if(!_element){
-                throw new Error("Element id not found: " + element);
-            }
-            element = _element;
-        }
+/*
+    public registerHTMLElement(element: HTMLElement | string, data = {}, position?: Coordinate){
+        element = fetchHTMLElement(element);
 
         // check if canvas is this element's parent
-        if(element.parentElement !== this._canvas){
+        if(element.parentElement !== this._canvasElement){
             throw new Error("Element is not a child of the canvas");
         }
 
@@ -377,6 +320,7 @@ class Elastibox {
         if(element.dataset.elastiboxId){
             throw new Error("Element is tainted: already seems to have an elastibox id");
         }
+
 
         // check if position exists, or get it from the boundingRect
         if(!geometry){
@@ -466,7 +410,7 @@ class Elastibox {
 
     }
 
-
+*/
     private _generateElastiboxId(): string{
         // generate a global ID
         return Elastibox._deviceId + "-" + this._instanceId + "-" +
